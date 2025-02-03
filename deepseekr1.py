@@ -1,5 +1,11 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import torch
+import argparse
+
+# Parse args
+parser = argparse.ArgumentParser("deepseek r1 7b prompter")
+parser.add_argument("prompt", help="The prompt to send to DeepSeek-R1", type=str)
+args = parser.parse_args()
 
 # Config
 # MODEL_NAME = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
@@ -23,7 +29,7 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=bnb_config,
     device_map="auto"
 )
-prompt = "What is the meaning of life? \n<think>\n"
+prompt = args.prompt + "\n<think>\n"
 
 # Eval
 inputs = tokenizer(prompt, return_tensors="pt").to(device)
