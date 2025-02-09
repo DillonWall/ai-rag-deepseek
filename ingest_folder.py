@@ -13,10 +13,10 @@ qdrant_ip = str(os.getenv("QDRANT_IP"))
 qdrant_port = int(os.getenv("QDRANT_PORT") or 0)
 collection_name = str(os.getenv("QDRANT_COLLECTION_NAME"))
 embed_model_name = str(os.getenv("EMBEDDING_MODEL_NAME"))
-assert (qdrant_ip)
-assert (qdrant_port != 0)
-assert (collection_name)
-assert (embed_model_name)
+assert qdrant_ip
+assert qdrant_port != 0
+assert collection_name
+assert embed_model_name
 
 # Parse args
 parser = argparse.ArgumentParser("RAG File ingester")
@@ -28,10 +28,10 @@ args = parser.parse_args()
 embedder = SentenceTransformer(embed_model_name)
 
 
-def setup_qdrant():
+def setup_qdrant() -> QdrantClient:
     client = QdrantClient(host=qdrant_ip, port=qdrant_port)
     vec_size = embedder.get_sentence_embedding_dimension()
-    assert (vec_size is not None)
+    assert vec_size is not None
 
     if not client.collection_exists(collection_name):
         client.create_collection(
@@ -89,7 +89,14 @@ def import_file(client: QdrantClient, filepath: str):
     )
 
 
-client = setup_qdrant()
-print(client)
-print(chunk_fixed_size(args.folderpath)[:5])
-import_file(client, args.folderpath)
+def import_folder(folderpath: str):
+    client = setup_qdrant()
+    assert os.path.isdir(folderpath)
+
+    for path, _, files in os.walk(folderpath):
+        for f in files:
+            fullpath = os.path.join(path, f)
+            import_file(client, fullpath)
+
+
+import_folder(args.folderpath)
