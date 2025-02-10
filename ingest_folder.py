@@ -29,6 +29,18 @@ args = parser.parse_args()
 embedder = SentenceTransformer(embed_model_name)
 
 
+def chunk_entire_file(filepath: str) -> list[str]:
+    chunks = []
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            text = f.read()
+            chunks.append(f"filepath: {filepath}\n" + text)
+    except Exception:
+        # TODO: some files may be utf-16-le encoded, so could try again with other encodings
+        pass
+    return chunks
+
+
 def chunk_fixed_size(filepath: str) -> list[str]:
     chunk_size = 300
     chunks = []
@@ -52,7 +64,7 @@ def chunk_file(filepath: str) -> list[str]:
     match fileext:
         case ".txt" | ".md":
             print(filepath)
-            return chunk_fixed_size(filepath)
+            return chunk_entire_file(filepath)
         case _:
             return []
 
