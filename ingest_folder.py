@@ -66,8 +66,20 @@ def chunk_fixed_size(filepath: str) -> list[str]:
     return chunks
 
 
+def chunk_file(filepath: str) -> list[str]:
+    _, fileext = os.path.splitext(filepath)
+    match fileext:
+        case ".txt" | ".md":
+            print(filepath)
+            return chunk_fixed_size(filepath)
+        case _:
+            return []
+
+
 def import_file(client: QdrantClient, filepath: str):
-    chunks = chunk_fixed_size(filepath)
+    chunks = chunk_file(filepath)
+    if len(chunks) == 0:
+        return
     embeddings = embedder.encode(chunks)
     # delete previous vectors with this filepath before inserting new ones
     client.delete(
