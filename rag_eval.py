@@ -1,9 +1,8 @@
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams
 from transformers import AutoModelForCausalLM, AutoTokenizer, \
     BitsAndBytesConfig
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
+from qdrant_helper import setup_qdrant
 import os
 import argparse
 import torch
@@ -47,31 +46,23 @@ model = AutoModelForCausalLM.from_pretrained(
 prompt = args.prompt + "\n<think>\n"
 
 
-def setup_qdrant() -> QdrantClient:
-    client = QdrantClient(host=qdrant_ip, port=qdrant_port)
+def generate_rag_prompt(query: str) -> str:
     vec_size = embedder.get_sentence_embedding_dimension()
     assert vec_size is not None
 
-    if not client.collection_exists(collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=vec_size,
-                distance=Distance.COSINE,
-            ),
-        )
-    return client
-
-
-def generate_rag_prompt(query: str) -> str:
-    qdrant = setup_qdrant()
+    qdrant = setup_qdrant(
+        qdrant_ip,
+        qdrant_port,
+        vec_size,
+        collection_name,
+    )
     embedded_prompt = embedder.encode(args.prompt)
     query_response = qdrant.query_points(
         collection_name=collection_name,
         query=embedded_prompt,
         limit=5,
     )
-    context = "\n".join([r.payload["text"] for r in query_response.points])
+    context = "\n".join([r.payload["text"] for r in query_response.points])  # pyright: ignore
     return f"Context: {context}\nQuestion {query}\n<think>"
 
 

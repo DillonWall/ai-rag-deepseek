@@ -1,8 +1,9 @@
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from qdrant_client.models import FilterSelector, VectorParams, Distance, \
-    PointStruct, Filter, MatchValue, FieldCondition
+from qdrant_client.models import FilterSelector, PointStruct, Filter, \
+    MatchValue, FieldCondition
 from dotenv import load_dotenv
+from qdrant_helper import setup_qdrant
 import os
 import argparse
 import uuid
@@ -26,30 +27,6 @@ args = parser.parse_args()
 
 # Setup
 embedder = SentenceTransformer(embed_model_name)
-
-
-def setup_qdrant() -> QdrantClient:
-    client = QdrantClient(host=qdrant_ip, port=qdrant_port)
-    vec_size = embedder.get_sentence_embedding_dimension()
-    assert vec_size is not None
-
-    try:
-        if not client.collection_exists(collection_name):
-            client.create_collection(
-                collection_name=collection_name,
-                vectors_config=VectorParams(
-                    size=vec_size,
-                    distance=Distance.COSINE,
-                ),
-            )
-    except Exception:
-        print(
-            Exception("Could not create collection in QDrant. \n" +
-                      "Please ensure the qdrant client is running")
-        )
-        quit(1)
-
-    return client
 
 
 def chunk_fixed_size(filepath: str) -> list[str]:
@@ -110,8 +87,16 @@ def import_file(client: QdrantClient, filepath: str):
 
 
 def import_folder(folderpath: str):
-    client = setup_qdrant()
     assert os.path.isdir(folderpath)
+    vec_size = embedder.get_sentence_embedding_dimension()
+    assert vec_size is not None
+
+    client = setup_qdrant(
+        qdrant_ip,
+        qdrant_port,
+        vec_size,
+        collection_name,
+    )
 
     for path, _, files in os.walk(folderpath):
         for f in files:
