@@ -61,6 +61,7 @@ def generate_rag_prompt(query: str) -> str:
         collection_name=collection_name,
         query=embedded_prompt,
         limit=5,
+        score_threshold=0.2,
     )
     context = "\n".join([r.payload["text"] for r in query_response.points])  # pyright: ignore
     return f"Context: {context}\nQuestion {query}\n<think>"
