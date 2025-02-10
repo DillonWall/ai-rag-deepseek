@@ -32,14 +32,18 @@ embedder = SentenceTransformer(embed_model_name)
 def chunk_fixed_size(filepath: str) -> list[str]:
     chunk_size = 300
     chunks = []
-    with open(filepath, "r", encoding="utf-8") as f:
-        text = f.read()
-        start, end = 0, chunk_size
-        while start < len(text):
-            end = min(end, len(text))
-            chunks.append(text[start:end])
-            start = end
-            end += chunk_size
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            text = f.read()
+            start, end = 0, chunk_size
+            while start < len(text):
+                end = min(end, len(text))
+                chunks.append(text[start:end])
+                start = end
+                end += chunk_size
+    except Exception:
+        # TODO: some files may be utf-16-le encoded, so could try again with other encodings
+        pass
     return chunks
 
 
