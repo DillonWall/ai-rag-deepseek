@@ -33,14 +33,22 @@ def setup_qdrant() -> QdrantClient:
     vec_size = embedder.get_sentence_embedding_dimension()
     assert vec_size is not None
 
-    if not client.collection_exists(collection_name):
-        client.create_collection(
-            collection_name=collection_name,
-            vectors_config=VectorParams(
-                size=vec_size,
-                distance=Distance.COSINE,
-            ),
+    try:
+        if not client.collection_exists(collection_name):
+            client.create_collection(
+                collection_name=collection_name,
+                vectors_config=VectorParams(
+                    size=vec_size,
+                    distance=Distance.COSINE,
+                ),
+            )
+    except Exception:
+        print(
+            Exception("Could not create collection in QDrant. \n" +
+                      "Please ensure the qdrant client is running")
         )
+        quit(1)
+
     return client
 
 
